@@ -99,13 +99,23 @@ export const db = {
 
   getCartSize: async (userId) => {
     try {
+      if (!userId) {
+        console.log("No userId provided to getCartSize");
+        return 0;
+      }
+      
       await connectToDatabase();
-      const result = await User.findOne({ _id: userId }).select("cart");
-      // new User({...}) + save = create
-      const cartSize = result.cart.length;
-      return cartSize || 0;
+      const user = await User.findOne({ _id: userId }).select("cart");
+      
+      if (!user || !user.cart) {
+        console.log("User or user's cart not found");
+        return 0;
+      }
+      
+      return user.cart.length || 0;
     } catch (error) {
-      throw error;
+      console.error("Error in getCartSize:", error.message);
+      return 0; // Return 0 instead of throwing an error
     }
   },
 

@@ -30,10 +30,19 @@ export const removeFromCart = (userId, productId) => {};
 export const clearCart = (userId) => {};
 
 export const getCartSize = async (userId) => {
+  if (!userId) {
+    console.log("No userId provided to getCartSize client function");
+    return 0;
+  }
+  
   try {
     const response = await axios.post("/api/cart/size", { userId });
-    return response.data.data;
+    if (response.data && typeof response.data.data === 'number') {
+      return response.data.data;
+    }
+    return 0;
   } catch (error) {
+    console.error("Error getting cart size:", error.message);
     return 0;
   }
 };

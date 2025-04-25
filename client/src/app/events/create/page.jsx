@@ -4,6 +4,10 @@ import axios from "axios";
 import { getToken } from "@/../actions/userActions";
 import { useRouter } from "next/navigation";
 import ImageUploader from "@/components/ImageUploader";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 const EventForm = () => {
   const [eventData, setEventData] = useState({
@@ -99,102 +103,104 @@ const EventForm = () => {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Add New Event</h1>
+    <div className="container mx-auto p-6 bg-secondary min-h-screen">
+      <Card className="max-w-2xl mx-auto shadow-lg">
+        <CardHeader className="border-b">
+          <CardTitle className="text-2xl font-bold text-primary titlefont">Add New Event</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-6">
+          {message && (
+            <div
+              className={`p-3 mb-4 rounded ${
+                message.includes("Error") || message.includes("error")
+                  ? "bg-destructive/10 text-destructive"
+                  : "bg-accent/30 text-primary"
+              }`}>
+              {message}
+            </div>
+          )}
 
-      {message && (
-        <div
-          className={`p-2 mb-4 ${
-            message.includes("Error") || message.includes("error")
-              ? "bg-red-100 text-red-700"
-              : "bg-green-100 text-green-700"
-          } rounded`}>
-          {message}
-        </div>
-      )}
+          {!isLoggedIn ? (
+            <div className="p-4 bg-yellow-100 text-yellow-800 rounded">
+              You need to be logged in to create an event.
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block mb-1 font-medium text-secondary">Event Title</label>
+                <Input
+                  type="text"
+                  name="title"
+                  value={eventData.title}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
 
-      {!isLoggedIn ? (
-        <div className="p-4 bg-yellow-100 text-yellow-800 rounded">
-          You need to be logged in to create an event.
-        </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block mb-1 font-medium">Event Title</label>
-            <input
-              type="text"
-              name="title"
-              value={eventData.title}
-              onChange={handleInputChange}
-              required
-              className="w-full p-2 border rounded focus:ring focus:ring-blue-200 focus:outline-none"
-            />
-          </div>
+              <div>
+                <label className="block mb-1 font-medium text-secondary">Description</label>
+                <Textarea
+                  name="description"
+                  value={eventData.description}
+                  onChange={handleInputChange}
+                  required
+                  rows="3"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 font-medium text-secondary">Event Image</label>
+                <ImageUploader
+                  image={eventData.image}
+                  onUploadSuccess={handleOnUpload}
+                  onUploadError={handleUploadError}
+                />
+              </div>
 
-          <div>
-            <label className="block mb-1 font-medium">Description</label>
-            <textarea
-              name="description"
-              value={eventData.description}
-              onChange={handleInputChange}
-              required
-              className="w-full p-2 border rounded focus:ring focus:ring-blue-200 focus:outline-none"
-              rows="3"></textarea>
-          </div>
-          <label className="block mb-1 font-medium">Event Image</label>
+              <div>
+                <label className="block mb-1 font-medium text-secondary">Event Date</label>
+                <Input
+                  type="date"
+                  name="eventDate"
+                  value={eventData.eventDate}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
 
-          <ImageUploader
-            image={eventData.image}
-            onUploadSuccess={handleOnUpload}
-            onUploadError={handleUploadError}
-          />
+              <div>
+                <label className="block mb-1 font-medium text-secondary">Event Time</label>
+                <Input
+                  type="time"
+                  name="eventTime"
+                  value={eventData.eventTime}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
 
-          <div>
-            <label className="block mb-1 font-medium">Event Date</label>
-            <input
-              type="date"
-              name="eventDate"
-              value={eventData.eventDate}
-              onChange={handleInputChange}
-              required
-              className="w-full p-2 border rounded focus:ring focus:ring-blue-200 focus:outline-none"
-            />
-          </div>
+              <div>
+                <label className="block mb-1 font-medium text-secondary">Location</label>
+                <Input
+                  type="text"
+                  name="location"
+                  value={eventData.location}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
 
-          <div>
-            <label className="block mb-1 font-medium">Event Time</label>
-            <input
-              type="time"
-              name="eventTime"
-              value={eventData.eventTime}
-              onChange={handleInputChange}
-              required
-              className="w-full p-2 border rounded focus:ring focus:ring-blue-200 focus:outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block mb-1 font-medium">Location</label>
-            <input
-              type="text"
-              name="location"
-              value={eventData.location}
-              onChange={handleInputChange}
-              required
-              className="w-full p-2 border rounded focus:ring focus:ring-blue-200 focus:outline-none"
-            />
-          </div>
-
-          <div className="pt-2">
-            <button
-              type="submit"
-              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={loading || !eventData.image}>
-              {loading ? "Creating Event..." : "Create Event"}
-            </button>
-          </div>
-        </form>
-      )}
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  className="bg-primary hover:bg-primary/90 text-white"
+                  disabled={loading || !eventData.image}>
+                  {loading ? "Creating Event..." : "Create Event"}
+                </Button>
+              </div>
+            </form>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
