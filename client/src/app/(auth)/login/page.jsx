@@ -1,8 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { loginAction } from "../../../../actions/loginActions";
+import { Shield, Store, User } from "lucide-react";
 
 const LoginPage = () => {
   const router = useRouter();
@@ -33,9 +35,21 @@ const LoginPage = () => {
       if (!result.success) {
         setError(result.error || "Login failed. Please try again.");
       } else {
-        console.log("Login successful");
-        // Redirect to dashboard
-        router.push("/dashboard");
+        console.log("Login successful, result:", result);
+        console.log("Login - User object:", result.user);
+        // Redirect based on user role
+        const userRole = result.user.role || result.user.userType;
+        console.log("Login - User role:", userRole);
+        if (userRole === "admin") {
+          console.log("Login - Redirecting admin to /emergency/admin");
+          router.push("/emergency/admin");
+        } else if (userRole === "seller") {
+          console.log("Login - Redirecting seller to /dashboard");
+          router.push("/dashboard");
+        } else {
+          console.log("Login - Redirecting regular user to /dashboard");
+          router.push("/dashboard");
+        }
       }
     } catch (error) {
       setError("An unexpected error occurred. Please try again later.");
@@ -46,59 +60,63 @@ const LoginPage = () => {
   };
 
   const renderForm = () => (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
-        <div className="mb-4 p-2 bg-red-100 border border-red-400 text-red-700 rounded">
+        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
           {error}
         </div>
       )}
-      <div className="mb-4">
+      
+      <div>
         <label
           className="block text-gray-700 text-sm font-bold mb-2"
-          htmlFor="email" name="email">
-          Email
+          htmlFor="email">
+          Email Address
         </label>
-        <input
+        <Input
           type="email"
           id="email"
           name="email"
           value={user.email}
           onChange={handleInputChange}
-          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-800"
+          className="w-full"
           placeholder="Enter your email"
           required
         />
       </div>
-      <div className="mb-4">
+      
+      <div>
         <label
           className="block text-gray-700 text-sm font-bold mb-2"
-          htmlFor="password" name="password">
+          htmlFor="password">
           Password
         </label>
-        <input
+        <Input
           type="password"
           id="password"
           name="password"
           value={user.password}
           onChange={handleInputChange}
-          className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-800"
+          className="w-full"
           placeholder="Enter your password"
           required
         />
       </div>
+      
       <button
         type="submit"
         disabled={loading}
-        name="submit"
-        className="w-full bg-yellow-800 text-white py-2 rounded-lg hover:bg-yellow-700 transition duration-300 disabled:bg-yellow-500 disabled:cursor-not-allowed">
-        {loading ? "Logging in..." : `Login as ${user.userType}`}
+        className="w-full bg-yellow-800 text-white py-3 rounded-lg hover:bg-yellow-700 transition duration-300 disabled:bg-yellow-500 disabled:cursor-not-allowed font-medium">
+        {loading ? "Signing in..." : `Sign in as ${user.userType === 'admin' ? 'Admin' : user.userType === 'seller' ? 'Seller' : 'User'}`}
       </button>
-      <div className="mt-4 text-center">
+      
+      <div className="mt-6 text-center">
         <p className="text-sm text-gray-600">
           Don't have an account?{" "}
           <button
+            type="button"
             onClick={() => router.push("/register")}
-            className="text-yellow-800 hover:text-yellow-700 font-medium">
+            className="text-yellow-800 hover:text-yellow-700 font-medium underline">
             Register here
           </button>
         </p>
@@ -107,24 +125,49 @@ const LoginPage = () => {
   );
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-lg ">
-        <h2 className="text-2xl font-semibold text-center mb-4">Login</h2>
-        <Tabs defaultValue="user" className="w-[400px]">
-          <TabsList>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-50 via-white to-yellow-50">
+      <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100 w-full max-w-md">
+        <div className="text-center mb-6">
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back</h2>
+          <p className="text-gray-600">Sign in to your account</p>
+        </div>
+
+        <Tabs defaultValue="user" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
             <TabsTrigger
               value="user"
-              onClick={() => handleUserTypeChange("user")}>
-              User Account
+              onClick={() => handleUserTypeChange("user")}
+              className="flex items-center gap-2 text-sm">
+              <User className="h-4 w-4" />
+              User
             </TabsTrigger>
             <TabsTrigger
               value="seller"
-              onClick={() => handleUserTypeChange("seller")}>
-              Seller Account
+              onClick={() => handleUserTypeChange("seller")}
+              className="flex items-center gap-2 text-sm">
+              <Store className="h-4 w-4" />
+              Seller
+            </TabsTrigger>
+            <TabsTrigger
+              value="admin"
+              onClick={() => handleUserTypeChange("admin")}
+              className="flex items-center gap-2 text-sm">
+              <Shield className="h-4 w-4" />
+              Admin
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="user">{renderForm()}</TabsContent>
-          <TabsContent value="seller">{renderForm()}</TabsContent>
+          
+          <TabsContent value="user" className="space-y-4">
+            {renderForm()}
+          </TabsContent>
+          
+          <TabsContent value="seller" className="space-y-4">
+            {renderForm()}
+          </TabsContent>
+          
+          <TabsContent value="admin" className="space-y-4">
+            {renderForm()}
+          </TabsContent>
         </Tabs>
       </div>
     </div>

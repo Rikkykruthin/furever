@@ -4,18 +4,15 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { connectToDatabase } from "@/../db/dbConfig";
 import User from "../db/schema/user.schema";
-import Seller from "../db/schema/seller.schema";
 import { z } from "zod";
 import { setCookie } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import mongoose from "mongoose";
 
-const JWT_USER_SECRET = process.env.JWT_USER_SECRET;
-const JWT_SELLER_SECRET = process.env.JWT_SELLER_SECRET;
+const JWT_SECRET = process.env.JWT_USER_SECRET;
 
 // Ensure database is connected before proceeding
-// This is better than just the function reference
 try {
   connectToDatabase();
 } catch (error) {
@@ -25,9 +22,9 @@ try {
 const loginValidationSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
-  userType: z.enum(["user", "seller"], {
+  userType: z.enum(["user", "seller", "admin"], {
     errorMap: () => ({
-      message: "User type must be either 'user' or 'seller'",
+      message: "User type must be 'user', 'seller', or 'admin'",
     }),
   }),
 });
@@ -50,26 +47,16 @@ export async function loginAction(formData) {
     // Ensure DB connection is active
     await connectToDatabase();
 
-    // Select the appropriate model
-    const Member = userType === "user" ? User : Seller;
-
-    // Modified findOne with explicit try/catch and timeout handling
+    // Find user in the unified User model
     let user;
     try {
-      // Use a more efficient query with only necessary fields
-      user = await Member.findOne({ email }).select("+password").lean().exec();
-      // user = await Member.findOne({ email }).select("+password")
-      // this is to prevent the db from timing out
-      // console.log("Database query successful");
-      // lean () means it returns a plain JS object
-      // exec () means it returns a promise
+      user = await User.findOne({ email }).select("+password").lean().exec();
     } catch (dbError) {
       console.error("Database query failed:", dbError);
       if (dbError instanceof mongoose.Error.MongooseServerSelectionError) {
         return {
           success: false,
-          error:
-            "Could not connect to database. Please check if MongoDB is running.",
+          error: "Could not connect to database. Please check if MongoDB is running.",
         };
       }
       return {
@@ -85,6 +72,14 @@ export async function loginAction(formData) {
       };
     }
 
+    // Check if user's role matches the requested userType
+    if (user.role !== userType) {
+      return {
+        success: false,
+        error: `Invalid credentials for ${userType} access`,
+      };
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return {
@@ -93,13 +88,11 @@ export async function loginAction(formData) {
       };
     }
 
-    const JWT_SECRET =
-      userType === "user" ? JWT_USER_SECRET : JWT_SELLER_SECRET;
     const token = jwt.sign({ id: user._id }, JWT_SECRET, {
       expiresIn: "7d",
     });
     await clearAllCookies();
-    await setCookie(token, userType);
+    await setCookie(token, user.role);
 
     // Remove password from returned user object
     delete user.password;
@@ -110,7 +103,12 @@ export async function loginAction(formData) {
         _id: user._id.toString(),
         name: user.name,
         email: user.email,
-        userType,
+        role: user.role,
+        userType: user.role, // Keep userType for backward compatibility
+        isAdmin: user.role === "admin",
+        isSeller: user.role === "seller",
+        storeName: user.storeName,
+        adminLevel: user.adminLevel,
       },
     };
   } catch (error) {
@@ -132,67 +130,50 @@ export async function getAuthenticatedUser() {
     const cookieStore = await cookies();
     const userToken = cookieStore.get("userToken")?.value;
     const sellerToken = cookieStore.get("sellerToken")?.value;
+    const adminToken = cookieStore.get("adminToken")?.value;
 
-    // console.log("User token from cookies:", userToken);
-
-    if (!userToken && !sellerToken) {
+    const token = userToken || sellerToken || adminToken;
+    
+    if (!token) {
       console.log("No authentication token found");
       return null;
-      
     }
 
-    if (userToken) {
-      try {
-        const decoded = jwt.verify(userToken, process.env.JWT_USER_SECRET);
-        const user = await User.findById(decoded.id).select("-password -__v").lean();
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_USER_SECRET);
+      const user = await User.findById(decoded.id).select("-password -__v").lean();
 
-        console.log("User from database:", user);
+      console.log("User from database:", user);
 
-        if (user) {
-          authenticateUser = {
-            // ...user.toObject(),
-            _id: user._id.toString(),
-            userType: "user",
-            token: userToken,
-          };
-          return {
-            // ...user.toObject(),
-            _id: user._id.toString(),
-            userType: "user",
-            token: userToken,
-          };
-        }
-      } catch (error) {
-        console.error("User token verification failed:", error);
+      if (user) {
+        authenticateUser = {
+          _id: user._id.toString(),
+          userType: user.role, // Map role to userType for backward compatibility
+          role: user.role,
+          isAdmin: user.role === "admin",
+          isSeller: user.role === "seller",
+          token: token,
+          name: user.name,
+          email: user.email,
+          storeName: user.storeName,
+          adminLevel: user.adminLevel,
+        };
+        return {
+          _id: user._id.toString(),
+          userType: user.role,
+          role: user.role,
+          isAdmin: user.role === "admin",
+          isSeller: user.role === "seller",
+          token: token,
+          name: user.name,
+          email: user.email,
+          storeName: user.storeName,
+          adminLevel: user.adminLevel,
+        };
       }
-    }
-
-    if (sellerToken) {
-      try {
-        const decoded = jwt.verify(sellerToken, process.env.JWT_SELLER_SECRET);
-        console.log("Seller from database:", decoded);
-        const seller = await Seller.findById(decoded.id).select(
-          "-password -__v"
-        ).lean();
-
-        if (seller) {
-          authenticateUser = {
-            // ...seller.toObject(),
-            _id: seller._id.toString(),
-            userType: "seller",
-            token: sellerToken,
-          };
-          return {
-            // ...seller.toObject(),
-            _id: seller._id.toString(),
-            userType: "seller",
-            token: sellerToken,
-          };
-        }
-      } catch (error) {
-        console.error("Seller token verification failed:", error);
-        redirect("/login");
-      }
+    } catch (error) {
+      console.error("Token verification failed:", error);
+      return null;
     }
 
     return null;
@@ -202,28 +183,14 @@ export async function getAuthenticatedUser() {
   }
 }
 
-async function clearAllCookies() {
+export async function clearAllCookies() {
   const cookieStore = await cookies();
-
-  const allCookies = cookieStore.getAll();
-  for (const cookie of allCookies) {
-    cookieStore.set({
-      name: cookie.name,
-      value: "",
-      expires: new Date(0),
-      path: "/",
-    });
-  }
-
-  return { success: true, message: "All cookies cleared" };
+  cookieStore.delete("userToken");
+  cookieStore.delete("sellerToken");
+  cookieStore.delete("adminToken");
 }
 
 export async function logoutAction() {
-  try {
-    const result = await clearAllCookies();
-    redirect("/login");
-  } catch (error) {
-    console.error("Logout error:", error);
-    return { success: false, error: "An error occurred during logout" };
-  }
+  await clearAllCookies();
+  redirect("/login");
 }

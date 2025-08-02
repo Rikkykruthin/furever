@@ -2,7 +2,7 @@ import { connectToDatabase } from "./dbConfig";
 
 import User from "./schema/user.schema";
 // import Chat from "./schema/chat";
-import Seller from "./schema/seller.schema";
+// import Seller from "./schema/seller.schema"; // Removed - now using unified User schema
 import Product from "./schema/product.schema";
 import Review from "./schema/review.schema";
 import Order from "./schema/order.schema";
@@ -23,8 +23,12 @@ export const db = {
   addSeller: async (data) => {
     try {
       await connectToDatabase();
-      const result = await Seller.create(data);
-      // new User({...}) + save = create
+      // Use unified User schema with role: "seller"
+      const sellerData = {
+        ...data,
+        role: "seller"
+      };
+      const result = await User.create(sellerData);
       return result;
     } catch (error) {
       throw error;

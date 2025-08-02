@@ -4,12 +4,10 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { connectToDatabase } from "@/../db/dbConfig";
 import User from "../db/schema/user.schema";
-import Seller from "../db/schema/seller.schema";
 import { z } from "zod";
 import { setCookie } from "@/lib/auth";
 
-const JWT_USER_SECRET = process.env.JWT_USER_SECRET;
-const JWT_SELLER_SECRET = process.env.JWT_SELLER_SECRET;
+const JWT_SECRET = process.env.JWT_USER_SECRET;
 const saltRounds = 10;
 
 const registerValidationSchema = z.object({
@@ -18,9 +16,10 @@ const registerValidationSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters long"),
   userType: z.enum(["user", "seller"], {
     errorMap: () => ({
-      message: "User type must be either 'user' or 'seller'",
+      message: "User type must be 'user' or 'seller'",
     }),
   }),
+  storeName: z.string().optional(), // Required for sellers
 });
 
 export async function registerAction(formData) {
@@ -34,13 +33,20 @@ export async function registerAction(formData) {
       };
     }
 
-    const { name, email, password, userType } = parsedData.data;
+    const { name, email, password, userType, storeName } = parsedData.data;
+
+    // Validate seller-specific requirements
+    if (userType === "seller" && (!storeName || storeName.trim() === "")) {
+      return {
+        success: false,
+        error: "Store name is required for seller accounts",
+      };
+    }
 
     await connectToDatabase();
 
-    const Member = userType === "user" ? User : Seller;
-
-    const existingUser = await Member.findOne({ email });
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       return {
         success: false,
@@ -49,16 +55,24 @@ export async function registerAction(formData) {
     }
 
     const hashedPassword = await bcrypt.hash(password, saltRounds);
-    const user = await Member.create({
+    
+    // Create user data based on role
+    const userData = {
       name,
       email,
       password: hashedPassword,
+      role: userType,
       createdAt: new Date(),
       updatedAt: new Date(),
-    });
+    };
 
-    const JWT_SECRET =
-      userType === "user" ? JWT_USER_SECRET : JWT_SELLER_SECRET;
+    // Add role-specific fields
+    if (userType === "seller") {
+      userData.storeName = storeName;
+    }
+
+    const user = await User.create(userData);
+
     const token = jwt.sign({ id: user._id }, JWT_SECRET, {
       expiresIn: "7d",
     });
@@ -70,7 +84,12 @@ export async function registerAction(formData) {
         _id: user._id.toString(),
         name: user.name,
         email: user.email,
-        userType,
+        role: user.role,
+        userType: user.role,
+        isAdmin: user.role === "admin",
+        isSeller: user.role === "seller",
+        storeName: user.storeName,
+        adminLevel: user.adminLevel,
       },
     };
   } catch (error) {

@@ -7,7 +7,7 @@ import PostForm from "@/components/pages/community/PostForm";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent } from "@/components/ui/card";
 import axios from "axios";
-import { getUserByToken, getToken } from "@/../actions/userActions";
+import { getAuthenticatedUser } from "@/../actions/loginActions";
 import { Loader2, MessageSquare, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -34,17 +34,11 @@ function CommunityInteriorPage() {
   const setAuthStatus = async () => {
     if (typeof window !== "undefined") {
       try {
-        const userToken = await getToken("userToken");
+        const userToken = await getAuthenticatedUser();
         if (userToken) {
-          const res = await getUserByToken(userToken, "user");
-          if (res.success) {
-            setIsLoggedIn(true);
-            setUser(res.user);
-            setToken(userToken);
-          } else {
-            console.error(res.message);
-            throw new Error(res.message);
-          }
+          setIsLoggedIn(true);
+          setUser(userToken);
+          setToken(userToken);
         } else {
           setIsLoggedIn(false);
         }

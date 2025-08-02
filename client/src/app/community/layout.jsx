@@ -5,7 +5,7 @@ import { Plus, Compass, Home, Search, Settings } from "lucide-react";
 import CreateCommunityModal from "@/components/pages/community/CommunityForm";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { getUserByToken, getToken } from "@/../actions/userActions";
+import { getAuthenticatedUser } from "@/../actions/loginActions";
 import CommunityCard from "@/components/pages/community/CommunityCard";
 import axios from "axios";
 import Link from "next/link";
@@ -26,18 +26,13 @@ export default function CommunityLayout({ children }) {
   const checkAuthAndFetchData = async () => {
     if (typeof window !== "undefined") {
       try {
-        const userToken = await getToken("userToken");
-        if (userToken) {
-          const res = await getUserByToken(userToken, "user");
-          if (res.success) {
-            setIsLoggedIn(true);
-            setUser(res.user);
-            setToken(userToken);
-          } else {
-            console.error(res.message);
-            throw new Error(res.message);
-          }
+        const authenticatedUser = await getAuthenticatedUser();
+        if (authenticatedUser) {
+          setIsLoggedIn(true);
+          setUser(authenticatedUser);
+          setToken(authenticatedUser.token);
         } else {
+          console.log("No authenticated user found");
           setIsLoggedIn(false);
         }
       } catch (error) {

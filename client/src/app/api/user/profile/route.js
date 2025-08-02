@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "../../../../../db/dbConfig";
 import User from "../../../../../db/schema/user.schema";
-import Seller from "../../../../../db/schema/seller.schema";
 import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 
@@ -13,8 +12,11 @@ export async function PUT(request) {
     const cookieStore = cookies();
     const userToken = cookieStore.get("userToken")?.value;
     const sellerToken = cookieStore.get("sellerToken")?.value;
+    const adminToken = cookieStore.get("adminToken")?.value;
 
-    if (!userToken && !sellerToken) {
+    const token = userToken || sellerToken || adminToken;
+
+    if (!token) {
       return NextResponse.json(
         { success: false, error: "User not authenticated" },
         { status: 401 }
@@ -22,7 +24,7 @@ export async function PUT(request) {
     }
 
     const body = await request.json();
-    const { name, bio, profilePicture } = body;
+    const { name, bio, profilePicture, storeName } = body;
     
     // Validate input
     if (!name) {
@@ -33,43 +35,33 @@ export async function PUT(request) {
     }
 
     let userId;
-    let userType;
     
-    if (userToken) {
-      try {
-        const decoded = jwt.verify(userToken, process.env.JWT_USER_SECRET);
-        userId = decoded.id;
-        userType = "user";
-      } catch (error) {
-        return NextResponse.json(
-          { success: false, error: "Invalid token" },
-          { status: 401 }
-        );
-      }
-    } else {
-      try {
-        const decoded = jwt.verify(sellerToken, process.env.JWT_SELLER_SECRET);
-        userId = decoded.id;
-        userType = "seller";
-      } catch (error) {
-        return NextResponse.json(
-          { success: false, error: "Invalid token" },
-          { status: 401 }
-        );
-      }
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_USER_SECRET);
+      userId = decoded.id;
+    } catch (error) {
+      return NextResponse.json(
+        { success: false, error: "Invalid token" },
+        { status: 401 }
+      );
     }
 
-    // Update the appropriate user type
-    const Model = userType === "user" ? User : Seller;
+    // Prepare update data
+    const updateData = {
+      name,
+      bio,
+      profilePicture,
+      updatedAt: new Date()
+    };
+
+    // Add storeName if user is a seller
+    if (storeName !== undefined) {
+      updateData.storeName = storeName;
+    }
     
-    const updatedUser = await Model.findByIdAndUpdate(
+    const updatedUser = await User.findByIdAndUpdate(
       userId,
-      {
-        name,
-        bio,
-        profilePicture,
-        updatedAt: new Date()
-      },
+      updateData,
       { new: true, runValidators: true }
     ).select("-password");
 
@@ -84,7 +76,10 @@ export async function PUT(request) {
       success: true,
       user: {
         ...updatedUser.toObject(),
-        _id: updatedUser._id.toString()
+        _id: updatedUser._id.toString(),
+        userType: updatedUser.role,
+        isAdmin: updatedUser.role === "admin",
+        isSeller: updatedUser.role === "seller"
       }
     });
   } catch (error) {
@@ -101,8 +96,11 @@ export async function GET(request) {
     const cookieStore = cookies();
     const userToken = cookieStore.get("userToken")?.value;
     const sellerToken = cookieStore.get("sellerToken")?.value;
+    const adminToken = cookieStore.get("adminToken")?.value;
 
-    if (!userToken && !sellerToken) {
+    const token = userToken || sellerToken || adminToken;
+
+    if (!token) {
       return NextResponse.json(
         { success: false, error: "User not authenticated" },
         { status: 401 }
@@ -110,36 +108,18 @@ export async function GET(request) {
     }
 
     let userId;
-    let userType;
     
-    if (userToken) {
-      try {
-        const decoded = jwt.verify(userToken, process.env.JWT_USER_SECRET);
-        userId = decoded.id;
-        userType = "user";
-      } catch (error) {
-        return NextResponse.json(
-          { success: false, error: "Invalid token" },
-          { status: 401 }
-        );
-      }
-    } else {
-      try {
-        const decoded = jwt.verify(sellerToken, process.env.JWT_SELLER_SECRET);
-        userId = decoded.id;
-        userType = "seller";
-      } catch (error) {
-        return NextResponse.json(
-          { success: false, error: "Invalid token" },
-          { status: 401 }
-        );
-      }
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_USER_SECRET);
+      userId = decoded.id;
+    } catch (error) {
+      return NextResponse.json(
+        { success: false, error: "Invalid token" },
+        { status: 401 }
+      );
     }
 
-    // Get the appropriate user type
-    const Model = userType === "user" ? User : Seller;
-    
-    const user = await Model.findById(userId).select("-password");
+    const user = await User.findById(userId).select("-password");
 
     if (!user) {
       return NextResponse.json(
@@ -152,7 +132,10 @@ export async function GET(request) {
       success: true,
       user: {
         ...user.toObject(),
-        _id: user._id.toString()
+        _id: user._id.toString(),
+        userType: user.role,
+        isAdmin: user.role === "admin",
+        isSeller: user.role === "seller"
       }
     });
   } catch (error) {

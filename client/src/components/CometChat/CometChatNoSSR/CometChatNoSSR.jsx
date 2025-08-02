@@ -21,6 +21,20 @@ const COMETCHAT_CONSTANTS = {
   AUTH_KEY: process.env.NEXT_PUBLIC_COMETCHAT_AUTH_KEY,
 };
 
+// Validate environment variables
+const validateCometChatConfig = () => {
+  const missing = [];
+  if (!COMETCHAT_CONSTANTS.APP_ID) missing.push('NEXT_PUBLIC_COMETCHAT_APP_ID');
+  if (!COMETCHAT_CONSTANTS.REGION) missing.push('NEXT_PUBLIC_COMETCHAT_REGION');
+  if (!COMETCHAT_CONSTANTS.AUTH_KEY) missing.push('NEXT_PUBLIC_COMETCHAT_AUTH_KEY');
+  
+  if (missing.length > 0) {
+    console.error('Missing CometChat environment variables:', missing);
+    return false;
+  }
+  return true;
+};
+
 // Functional component for CometChatNoSSR
 const CometChatNoSSR = ({ currentUser }) => {
   const [isCometChatReady, setIsCometChatReady] = useState(false);
@@ -50,6 +64,13 @@ const CometChatNoSSR = ({ currentUser }) => {
     let isComponentMounted = true; // Use a local variable for mount status within this effect
     const initCometChat = async () => {
       try {
+        // Validate environment variables first
+        if (!validateCometChatConfig()) {
+          throw new Error(
+            "CometChat configuration incomplete. Please check environment variables."
+          );
+        }
+
         // --- 1. Get Your Application's Current User ---
         console.log("User data in cometchat init:", currentUser);
 
