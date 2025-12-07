@@ -17,7 +17,22 @@ export function getUser() {
 }
 
 export async function logout() {
-  Cookies.remove("token");
-  Cookies.remove("user");
-  redirect("/login");
+  try {
+    // Clear all auth cookies
+    Cookies.remove("userToken", { path: "/" });
+    Cookies.remove("sellerToken", { path: "/" });
+    Cookies.remove("adminToken", { path: "/" });
+    Cookies.remove("token", { path: "/" });
+    Cookies.remove("user", { path: "/" });
+    
+    // Call logout API
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include"
+    });
+    
+    // Redirect happens in the component
+  } catch (error) {
+    console.error("Logout error:", error);
+  }
 }

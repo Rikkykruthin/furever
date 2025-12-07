@@ -60,10 +60,20 @@ export async function POST(request) {
     post.commentCount += 1;
     await post.save();
 
+    // Convert to plain object
+    const commentObj = newComment.toObject();
+    commentObj._id = commentObj._id.toString();
+    if (commentObj.user) {
+      commentObj.user = commentObj.user.toString();
+    }
+    if (commentObj.post) {
+      commentObj.post = commentObj.post.toString();
+    }
+
     return NextResponse.json({
       success: true,
       message: "Comment posted successfully!",
-      comment: newComment,
+      comment: commentObj,
     });
   } catch (err) {
     console.error("Error in createComment:", err);
@@ -91,10 +101,23 @@ export async function GET(request) {
       .populate("user", "name email")
       .sort({ createdAt: -1 })
       .lean();
-    console.log(comments);
+    
+    // Convert to plain objects and ensure _id is string
+    const processedComments = comments.map(comment => {
+      const commentObj = { ...comment };
+      commentObj._id = commentObj._id.toString();
+      if (commentObj.user?._id) {
+        commentObj.user._id = commentObj.user._id.toString();
+      }
+      if (commentObj.post) {
+        commentObj.post = commentObj.post.toString();
+      }
+      return commentObj;
+    });
+    
     return NextResponse.json({
       success: true,
-      comments,
+      comments: processedComments,
     });
   } catch (err) {
     console.error("Error getting comments:", err);

@@ -107,10 +107,31 @@ export async function GET(request) {
       .sort({ createdAt: -1 })
       .lean();
 
+    // Convert Buffer objects to base64 strings and ensure _id is string
+    const processedPosts = posts.map(post => {
+      const postObj = { ...post };
+      
+      // Convert Buffer objects to base64 strings if they exist
+      if (postObj.author?.profilePicture && Buffer.isBuffer(postObj.author.profilePicture)) {
+        postObj.author.profilePicture = postObj.author.profilePicture.toString('base64');
+      }
+      
+      // Ensure _id is string
+      postObj._id = postObj._id.toString();
+      if (postObj.author?._id) {
+        postObj.author._id = postObj.author._id.toString();
+      }
+      if (postObj.community) {
+        postObj.community = postObj.community.toString();
+      }
+      
+      return postObj;
+    });
+
     // This should now include the image field for each post
     return NextResponse.json({
       success: true,
-      posts,
+      posts: processedPosts,
       communityName: community.name,
     });
   } catch (err) {

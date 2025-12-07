@@ -157,8 +157,12 @@ export async function POST(request) {
       );
     }
     
+    // Generate appointment ID before creating
+    const appointmentId = 'APT-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+    
     // Create appointment
     const appointment = new Appointment({
+      appointmentId, // Explicitly set appointmentId
       user: userId,
       vet: vetId,
       petDetails: {
@@ -173,7 +177,7 @@ export async function POST(request) {
       payment: {
         amount: vet.consultationFee,
         currency: vet.currency || "USD",
-        paymentMethod: paymentMethod || "mock",
+        paymentMethod: paymentMethod || "stripe",
         status: "pending"
       }
     });

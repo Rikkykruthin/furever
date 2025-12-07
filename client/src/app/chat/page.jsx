@@ -48,11 +48,11 @@ const Page = () => {
   // Render loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex items-center justify-center min-h-screen bg-secondary">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-xl text-gray-600">Authenticating user...</p>
-          <p className="text-sm text-gray-400 mt-2">Setting up your chat experience</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-xl text-primary">Authenticating user...</p>
+          <p className="text-sm text-secondary mt-2">Setting up your chat experience</p>
         </div>
       </div>
     );
@@ -61,26 +61,26 @@ const Page = () => {
   // Render error state
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+      <div className="flex items-center justify-center min-h-screen bg-secondary">
         <div className="text-center max-w-md mx-auto p-6">
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className="bg-accent/20 border-2 border-primary text-primary px-4 py-3 rounded-lg mb-4">
             <strong className="font-bold">Authentication Error</strong>
             <span className="block sm:inline"> {error}</span>
           </div>
           <div className="space-y-3">
-            <p className="text-gray-600">
+            <p className="text-secondary">
               You need to be logged in to access the chat feature.
             </p>
             <div className="flex flex-col sm:flex-row gap-2 justify-center">
               <a 
                 href="/login" 
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-colors"
+                className="bg-primary hover:bg-primary/90 text-white font-bold py-2 px-4 rounded-lg transition-colors"
               >
                 Go to Login
               </a>
               <button 
                 onClick={() => window.location.reload()} 
-                className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition-colors"
+                className="bg-accent hover:bg-accent/80 text-primary font-bold py-2 px-4 rounded-lg transition-colors"
               >
                 Retry
               </button>

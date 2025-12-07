@@ -107,10 +107,17 @@ export async function POST(request) {
       );
     }
 
+    // Convert to plain object
+    const communityObj = community.toObject();
+    communityObj._id = communityObj._id.toString();
+    if (communityObj.admin) {
+      communityObj.admin = communityObj.admin.toString();
+    }
+
     return NextResponse.json({
       success: true,
       message: "Community created successfully!",
-      community,
+      community: communityObj,
     });
   } catch (err) {
     console.error("Error in POST community:", {
@@ -147,7 +154,8 @@ async function getPosts(communityId) {
           select: "name _id",
         },
       ])
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     if (!communityPosts || communityPosts.length === 0) {
       return NextResponse.json({
@@ -157,7 +165,29 @@ async function getPosts(communityId) {
       });
     }
 
-    return NextResponse.json({ success: true, posts: communityPosts });
+    // Convert to plain objects and ensure _id is string
+    const processedPosts = communityPosts.map(post => {
+      const postObj = { ...post };
+      postObj._id = postObj._id.toString();
+      if (postObj.author?._id) {
+        postObj.author._id = postObj.author._id.toString();
+      }
+      if (postObj.community) {
+        postObj.community = postObj.community.toString();
+      }
+      if (postObj.comments) {
+        postObj.comments = postObj.comments.map(comment => {
+          const commentObj = { ...comment };
+          if (commentObj.user?._id) {
+            commentObj.user._id = commentObj.user._id.toString();
+          }
+          return commentObj;
+        });
+      }
+      return postObj;
+    });
+
+    return NextResponse.json({ success: true, posts: processedPosts });
   } catch (err) {
     console.error("Error in getPosts:", err);
     return NextResponse.json(

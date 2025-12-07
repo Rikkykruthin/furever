@@ -191,6 +191,11 @@ export async function clearAllCookies() {
 }
 
 export async function logoutAction() {
-  await clearAllCookies();
-  redirect("/login");
+  try {
+    await clearAllCookies();
+    return { success: true, message: "Logged out successfully" };
+  } catch (error) {
+    console.error("Logout error:", error);
+    return { success: false, message: "Failed to logout" };
+  }
 }

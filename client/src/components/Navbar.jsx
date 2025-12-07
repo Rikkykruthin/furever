@@ -16,7 +16,9 @@ import {
   Calendar,
   ChevronDown,
   Stethoscope,
-  MapPin,
+  GraduationCap,
+  Scissors,
+  Utensils,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -71,11 +73,31 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await logoutAction();
+      // Clear cookies on server
+      const result = await logoutAction();
+      
+      // Clear cookies on client side as well
+      if (typeof window !== "undefined") {
+        const Cookies = (await import("js-cookie")).default;
+        Cookies.remove("userToken", { path: "/" });
+        Cookies.remove("sellerToken", { path: "/" });
+        Cookies.remove("adminToken", { path: "/" });
+        
+        // Also clear via API route to ensure server-side cleanup
+        await fetch("/api/auth/logout", {
+          method: "POST",
+          credentials: "include"
+        });
+      }
+      
       setUser(null);
       router.push("/login");
+      router.refresh(); // Refresh to clear any cached data
     } catch (error) {
       console.error("Logout failed:", error);
+      // Still redirect even if there's an error
+      setUser(null);
+      router.push("/login");
     }
   };
 
@@ -171,6 +193,18 @@ const Navbar = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
+                    <Link href="/pet-training" className="flex items-center gap-2 w-full">
+                      <GraduationCap size={16} />
+                      Pet Training
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/pet-grooming" className="flex items-center gap-2 w-full">
+                      <Scissors size={16} />
+                      Pet Grooming
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
                     <Link href="/events" className="flex items-center gap-2 w-full">
                       <Calendar size={16} />
                       Events
@@ -179,12 +213,18 @@ const Navbar = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Street Services Dropdown */}
+              {/* Street Animals Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger className="flex items-center gap-1 hover:text-accent transition-colors cursor-pointer">
-                  <MapPin size={18} /> Street Services <ChevronDown size={14} />
+                  <Heart size={18} /> Street Animals <ChevronDown size={14} />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="bg-white text-black border shadow-lg">
+                  <DropdownMenuItem asChild>
+                    <Link href="/street-animals" className="flex items-center gap-2 w-full">
+                      <PawPrint size={16} />
+                      Browse Animals
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/emergency" className="flex items-center gap-2 w-full">
                       <AlertTriangle size={16} />
@@ -192,9 +232,21 @@ const Navbar = () => {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/street-animals" className="flex items-center gap-2 w-full">
-                      <Heart size={16} />
-                      Street Animals
+                    <Link href="/emergency/report" className="flex items-center gap-2 w-full">
+                      <AlertTriangle size={16} />
+                      Emergency Rescue
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/street-animals/medical" className="flex items-center gap-2 w-full">
+                      <Stethoscope size={16} />
+                      Medical Care
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/street-animals/feeding" className="flex items-center gap-2 w-full">
+                      <Utensils size={16} />
+                      Food & Water
                     </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -258,6 +310,18 @@ const Navbar = () => {
                   <Stethoscope size={16} /> Vet Consultation
                 </Link>
                 <Link
+                  href="/pet-training"
+                  className="flex items-center gap-2 hover:text-accent transition-colors pl-4"
+                  onClick={() => setMobileMenuOpen(false)}>
+                  <GraduationCap size={16} /> Pet Training
+                </Link>
+                <Link
+                  href="/pet-grooming"
+                  className="flex items-center gap-2 hover:text-accent transition-colors pl-4"
+                  onClick={() => setMobileMenuOpen(false)}>
+                  <Scissors size={16} /> Pet Grooming
+                </Link>
+                <Link
                   href="/events"
                   className="flex items-center gap-2 hover:text-accent transition-colors pl-4"
                   onClick={() => setMobileMenuOpen(false)}>
@@ -265,11 +329,17 @@ const Navbar = () => {
                 </Link>
               </div>
 
-              {/* Street Services */}
+              {/* Street Animals */}
               <div className="flex flex-col space-y-2 pl-4 border-l-2 border-accent">
                 <span className="flex items-center gap-2 text-sm font-medium">
-                  <MapPin size={16} /> Street Services
+                  <Heart size={16} /> Street Animals
                 </span>
+                <Link
+                  href="/street-animals"
+                  className="flex items-center gap-2 hover:text-accent transition-colors pl-4"
+                  onClick={() => setMobileMenuOpen(false)}>
+                  <PawPrint size={16} /> Browse Animals
+                </Link>
                 <Link
                   href="/emergency"
                   className="flex items-center gap-2 hover:text-accent transition-colors pl-4"
@@ -277,10 +347,22 @@ const Navbar = () => {
                   <AlertTriangle size={16} /> Emergency Reporting
                 </Link>
                 <Link
-                  href="/street-animals"
+                  href="/emergency/report"
                   className="flex items-center gap-2 hover:text-accent transition-colors pl-4"
                   onClick={() => setMobileMenuOpen(false)}>
-                  <Heart size={16} /> Street Animals
+                  <AlertTriangle size={16} /> Emergency Rescue
+                </Link>
+                <Link
+                  href="/street-animals/medical"
+                  className="flex items-center gap-2 hover:text-accent transition-colors pl-4"
+                  onClick={() => setMobileMenuOpen(false)}>
+                  <Stethoscope size={16} /> Medical Care
+                </Link>
+                <Link
+                  href="/street-animals/feeding"
+                  className="flex items-center gap-2 hover:text-accent transition-colors pl-4"
+                  onClick={() => setMobileMenuOpen(false)}>
+                  <Utensils size={16} /> Food & Water
                 </Link>
               </div>
               

@@ -178,10 +178,22 @@ export default function AddProductPage() {
           <Button
             variant="ghost"
             className="text-white hover:bg-primary/80"
-            onClick={() => {
-              logout();
-              router.push("/login");
-              toast.success("Logout successful");
+            onClick={async () => {
+              try {
+                // Clear cookies on server
+                const { logoutAction } = await import("../../../../actions/loginActions");
+                await logoutAction();
+                
+                // Clear cookies on client side
+                logout();
+                
+                router.push("/login");
+                router.refresh();
+                toast.success("Logout successful");
+              } catch (error) {
+                console.error("Logout failed:", error);
+                router.push("/login");
+              }
             }}
           >
             Logout

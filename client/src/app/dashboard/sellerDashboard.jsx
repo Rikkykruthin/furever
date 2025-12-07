@@ -87,10 +87,22 @@ export default function SellerDashboard() {
             <Button
               variant="destructive"
               className="flex items-center gap-2"
-              onClick={() => {
-                logout();
-                router.push("/login");
-                toast.success("Logout successful");
+              onClick={async () => {
+                try {
+                  // Clear cookies on server
+                  const { logoutAction } = await import("../../../actions/loginActions");
+                  await logoutAction();
+                  
+                  // Clear cookies on client side
+                  logout();
+                  
+                  router.push("/login");
+                  router.refresh();
+                  toast.success("Logout successful");
+                } catch (error) {
+                  console.error("Logout failed:", error);
+                  router.push("/login");
+                }
               }}
             >
               <LogOut className="w-4 h-4" /> Logout

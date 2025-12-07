@@ -33,7 +33,9 @@ import {
   Trash2,
   Settings,
   Bell,
-  History
+  History,
+  Stethoscope,
+  GraduationCap
 } from "lucide-react";
 import toast from "react-hot-toast";
 import axios from "axios";
@@ -347,6 +349,22 @@ export default function EmergencyAdminPage() {
             </div>
             
             <div className="flex items-center gap-4">
+              <Button
+                onClick={() => router.push("/admin/vets")}
+                variant="outline"
+                className="bg-white/10 border-white/30 text-white hover:bg-white/20"
+              >
+                <Stethoscope className="h-4 w-4 mr-2" />
+                Manage Vets
+              </Button>
+              <Button
+                onClick={() => router.push("/admin/trainers")}
+                variant="outline"
+                className="bg-white/10 border-white/30 text-white hover:bg-white/20"
+              >
+                <GraduationCap className="h-4 w-4 mr-2" />
+                Manage Trainers
+              </Button>
               <Button
                 onClick={refreshData}
                 variant="outline"

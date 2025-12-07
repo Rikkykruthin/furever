@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    unique: true,
+    // Removed unique constraint - multiple users can have the same name
   },
   email: {
     type: String,
@@ -17,7 +17,20 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
+    required: function() {
+      return !this.googleId; // Password not required if user signed in with Google
+    },
+  },
+  googleId: {
+    type: String,
+    required: false,
+    unique: true,
+    sparse: true, // Allows multiple null values
+  },
+  authProvider: {
+    type: String,
+    enum: ["local", "google"],
+    default: "local",
   },
   role: {
     type: String,

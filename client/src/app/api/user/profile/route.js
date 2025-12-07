@@ -24,7 +24,18 @@ export async function PUT(request) {
     }
 
     const body = await request.json();
-    const { name, bio, profilePicture, storeName } = body;
+    const { 
+      name, 
+      bio, 
+      profilePicture, 
+      storeName,
+      phone,
+      location,
+      website,
+      linkedin,
+      twitter,
+      instagram
+    } = body;
     
     // Validate input
     if (!name) {
@@ -53,6 +64,14 @@ export async function PUT(request) {
       profilePicture,
       updatedAt: new Date()
     };
+
+    // Add optional fields if provided
+    if (phone !== undefined) updateData.phone = phone;
+    if (location !== undefined) updateData.location = location;
+    if (website !== undefined) updateData.website = website;
+    if (linkedin !== undefined) updateData.linkedin = linkedin;
+    if (twitter !== undefined) updateData.twitter = twitter;
+    if (instagram !== undefined) updateData.instagram = instagram;
 
     // Add storeName if user is a seller
     if (storeName !== undefined) {
