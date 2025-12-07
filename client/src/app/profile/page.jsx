@@ -255,24 +255,35 @@ export default function ProfilePage() {
   const handleLogout = async () => {
     try {
       const { logoutAction } = await import("../../../actions/loginActions");
+      // redirect() will throw NEXT_REDIRECT error - this terminates execution
       await logoutAction();
       
+      // This code should never execute because redirect() throws
+      // But if it does, handle client-side cleanup as fallback
       if (typeof window !== "undefined") {
         const Cookies = (await import("js-cookie")).default;
         Cookies.remove("userToken", { path: "/" });
         Cookies.remove("sellerToken", { path: "/" });
         Cookies.remove("adminToken", { path: "/" });
-        
-        await fetch("/api/auth/logout", {
-          method: "POST",
-          credentials: "include"
-        });
       }
-      
       router.push("/login");
       router.refresh();
     } catch (error) {
+      // redirect() throws NEXT_REDIRECT error - this is expected behavior
+      // Check if it's a redirect error (NEXT_REDIRECT) or actual error
+      if (error && typeof error === 'object' && 'digest' in error && error.digest?.startsWith('NEXT_REDIRECT')) {
+        // This is the expected redirect - do nothing, let it redirect
+        return;
+      }
+      
+      // Actual error occurred - handle client-side logout as fallback
       console.error("Logout failed:", error);
+      if (typeof window !== "undefined") {
+        const Cookies = (await import("js-cookie")).default;
+        Cookies.remove("userToken", { path: "/" });
+        Cookies.remove("sellerToken", { path: "/" });
+        Cookies.remove("adminToken", { path: "/" });
+      }
       router.push("/login");
     }
   };

@@ -73,29 +73,37 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      // Clear cookies on server
-      const result = await logoutAction();
+      // Clear cookies on server - redirect() will throw NEXT_REDIRECT error
+      await logoutAction();
       
-      // Clear cookies on client side as well
+      // This code should never execute because redirect() throws
+      // But if it does, handle client-side cleanup as fallback
       if (typeof window !== "undefined") {
         const Cookies = (await import("js-cookie")).default;
         Cookies.remove("userToken", { path: "/" });
         Cookies.remove("sellerToken", { path: "/" });
         Cookies.remove("adminToken", { path: "/" });
-        
-        // Also clear via API route to ensure server-side cleanup
-        await fetch("/api/auth/logout", {
-          method: "POST",
-          credentials: "include"
-        });
       }
-      
       setUser(null);
       router.push("/login");
-      router.refresh(); // Refresh to clear any cached data
+      router.refresh();
     } catch (error) {
+      // redirect() throws NEXT_REDIRECT error - this is expected behavior
+      // Check if it's a redirect error (NEXT_REDIRECT) or actual error
+      if (error && typeof error === 'object' && 'digest' in error && error.digest?.startsWith('NEXT_REDIRECT')) {
+        // This is the expected redirect - do nothing, let it redirect
+        setUser(null);
+        return;
+      }
+      
+      // Actual error occurred - handle client-side logout as fallback
       console.error("Logout failed:", error);
-      // Still redirect even if there's an error
+      if (typeof window !== "undefined") {
+        const Cookies = (await import("js-cookie")).default;
+        Cookies.remove("userToken", { path: "/" });
+        Cookies.remove("sellerToken", { path: "/" });
+        Cookies.remove("adminToken", { path: "/" });
+      }
       setUser(null);
       router.push("/login");
     }

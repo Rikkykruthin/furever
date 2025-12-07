@@ -191,11 +191,10 @@ export async function clearAllCookies() {
 }
 
 export async function logoutAction() {
-  try {
-    await clearAllCookies();
-    return { success: true, message: "Logged out successfully" };
-  } catch (error) {
-    console.error("Logout error:", error);
-    return { success: false, message: "Failed to logout" };
-  }
+  await clearAllCookies();
+  // redirect() throws a NEXT_REDIRECT error which terminates execution
+  // This is the correct behavior - callers should not continue after this
+  redirect("/login");
+  // This line should never execute, but TypeScript requires it
+  return { success: true };
 }

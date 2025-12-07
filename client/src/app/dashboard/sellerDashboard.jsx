@@ -89,18 +89,28 @@ export default function SellerDashboard() {
               className="flex items-center gap-2"
               onClick={async () => {
                 try {
-                  // Clear cookies on server
+                  // Clear cookies on server - redirect() will throw NEXT_REDIRECT error
                   const { logoutAction } = await import("../../../actions/loginActions");
                   await logoutAction();
                   
-                  // Clear cookies on client side
+                  // This code should never execute because redirect() throws
+                  // But if it does, handle client-side cleanup as fallback
                   logout();
-                  
                   router.push("/login");
                   router.refresh();
                   toast.success("Logout successful");
                 } catch (error) {
+                  // redirect() throws NEXT_REDIRECT error - this is expected behavior
+                  // Check if it's a redirect error (NEXT_REDIRECT) or actual error
+                  if (error && typeof error === 'object' && 'digest' in error && error.digest?.startsWith('NEXT_REDIRECT')) {
+                    // This is the expected redirect - do nothing, let it redirect
+                    logout(); // Still clear client-side state
+                    return;
+                  }
+                  
+                  // Actual error occurred - handle client-side logout as fallback
                   console.error("Logout failed:", error);
+                  logout();
                   router.push("/login");
                 }
               }}
