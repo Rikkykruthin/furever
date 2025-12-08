@@ -31,6 +31,23 @@ const loginValidationSchema = z.object({
 
 export async function loginAction(formData) {
   try {
+    // Check for required environment variables
+    if (!JWT_SECRET) {
+      console.error("JWT_USER_SECRET environment variable is missing");
+      return {
+        success: false,
+        error: "Server configuration error. Please contact support.",
+      };
+    }
+
+    if (!process.env.MONGO_URI) {
+      console.error("MONGO_URI environment variable is missing");
+      return {
+        success: false,
+        error: "Server configuration error. Please contact support.",
+      };
+    }
+
     // Validate form data
     const parsedData = loginValidationSchema.safeParse(formData);
 
@@ -124,6 +141,17 @@ let authenticateUser = null;
 
 export async function getAuthenticatedUser() {
   try {
+    // Check for required environment variables
+    if (!process.env.JWT_USER_SECRET) {
+      console.error("JWT_USER_SECRET environment variable is missing");
+      return null;
+    }
+
+    if (!process.env.MONGO_URI) {
+      console.error("MONGO_URI environment variable is missing");
+      return null;
+    }
+
     if (authenticateUser) {
       return authenticateUser;
     }
@@ -192,9 +220,5 @@ export async function clearAllCookies() {
 
 export async function logoutAction() {
   await clearAllCookies();
-  // redirect() throws a NEXT_REDIRECT error which terminates execution
-  // This is the correct behavior - callers should not continue after this
   redirect("/login");
-  // This line should never execute, but TypeScript requires it
-  return { success: true };
 }
