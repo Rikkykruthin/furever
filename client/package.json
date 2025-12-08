@@ -13,7 +13,8 @@
     "setup-trainers": "node setup-trainers.js",
     "setup-groomers": "node setup-groomers.js",
     "setup-products": "node setup-products.js",
-    "fix-name-index": "node scripts/drop-name-index.js"
+    "fix-name-index": "node scripts/drop-name-index.js",
+    "test-mongodb": "node scripts/test-mongodb-connection.js"
   },
   "dependencies": {
     "@cometchat/calls-sdk-javascript": "^4.1.0",
