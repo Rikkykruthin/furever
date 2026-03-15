@@ -58,24 +58,24 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'hips.hearstapps.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'cdn.britannica.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.interflora.in',
+      },
+      {
+        protocol: 'https',
+        hostname: 'headsupfortails.com',
+      },
     ],
-    // Keep domains for backward compatibility (deprecated but still works)
-    domains: [
-      "res.cloudinary.com",
-      "source.unsplash.com",
-      "images.unsplash.com",
-      "plus.unsplash.com",
-      "static.independent.co.uk",
-      "static.vecteezy.com",
-      "images.pexels.com",
-      "media.istockphoto.com",
-      "www.petplate.com",
-      "m.media-amazon.com",
-      "future-mbbs.com",
-      "img.lovepik.com",
-      "www.nylabone.com",
-      "hips.hearstapps.com",
-    ],
+    // Increase timeout for slow external images
+    minimumCacheTTL: 60,
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
 };
 

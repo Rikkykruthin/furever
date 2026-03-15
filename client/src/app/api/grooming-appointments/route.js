@@ -292,7 +292,7 @@ async function checkSlotAvailability(groomerId, scheduledDate, scheduledTime) {
   const groomer = await Groomer.findById(groomerId);
   if (!groomer) return false;
   
-  const dayOfWeek = new Date(scheduledDate).toLocaleDateString('en-US', { weekday: 'lowercase' });
+  const dayOfWeek = new Date(scheduledDate).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
   const dayAvailability = groomer.availability[dayOfWeek];
   
   if (!dayAvailability || !dayAvailability.isAvailable) {
@@ -322,7 +322,7 @@ async function checkSlotAvailability(groomerId, scheduledDate, scheduledTime) {
 }
 
 async function updateGroomerSlotAvailability(groomerId, scheduledDate, scheduledTime, isBooked) {
-  const dayOfWeek = new Date(scheduledDate).toLocaleDateString('en-US', { weekday: 'lowercase' });
+  const dayOfWeek = new Date(scheduledDate).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
   
   await Groomer.updateOne(
     {

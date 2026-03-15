@@ -176,7 +176,7 @@ export async function GET(request) {
 // Helper functions
 function checkCurrentAvailability(availability) {
   const now = new Date();
-  const currentDay = now.toLocaleDateString('en-US', { weekday: 'lowercase' });
+  const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
   const currentTime = now.toTimeString().slice(0, 5);
   
   const dayAvailability = availability[currentDay];
@@ -198,7 +198,7 @@ function getNextAvailableSlot(availability) {
   for (let i = 0; i < 7; i++) {
     const checkDate = new Date(today);
     checkDate.setDate(today.getDate() + i);
-    const dayName = checkDate.toLocaleDateString('en-US', { weekday: 'lowercase' });
+    const dayName = checkDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
     
     const dayAvailability = availability[dayName];
     if (dayAvailability && dayAvailability.isAvailable) {

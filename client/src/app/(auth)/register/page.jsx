@@ -1,42 +1,41 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
 import { registerAction } from "../../../../actions/registerActions";
-import { 
-  Shield, 
-  Store, 
-  User, 
-  Mail, 
-  Lock, 
-  Eye, 
-  EyeOff, 
-  PawPrint, 
-  Sparkles,
-  ArrowRight,
+import { cn } from "@/lib/utils";
+import {
+  Store,
+  User,
+  Eye,
+  EyeOff,
   Loader2,
   CheckCircle2,
-  AlertCircle,
-  UserPlus,
-  Building2
+  AlertCircle
 } from "lucide-react";
 import toast from "react-hot-toast";
+import DogLoader2 from "@/components/DogLoader2";
 
-// Dynamically import 3D Cat component with SSR disabled
-const Cat3DScene = dynamic(
-  () => import("@/components/Cat3DScene"),
-  { 
-    ssr: false, 
-    loading: () => (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="w-24 h-24 border-4 border-accent/30 border-t-primary rounded-full animate-spin"></div>
-      </div>
-    )
-  }
-);
+const BottomGradient = () => {
+  return (
+    <>
+      <span
+        className="absolute inset-x-0 -bottom-px block h-px w-full bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-0 transition duration-500 group-hover/btn:opacity-100" />
+      <span
+        className="absolute inset-x-10 -bottom-px mx-auto block h-px w-1/2 bg-gradient-to-r from-transparent via-indigo-500 to-transparent opacity-0 blur-sm transition duration-500 group-hover/btn:opacity-100" />
+    </>
+  );
+};
+
+const LabelInputContainer = ({ children, className }) => {
+  return (
+    <div className={cn("flex w-full flex-col space-y-2", className)}>
+      {children}
+    </div>
+  );
+};
 
 const RegisterPage = () => {
   const router = useRouter();
@@ -44,8 +43,6 @@ const RegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [user, setUser] = useState({
     name: "",
@@ -53,20 +50,10 @@ const RegisterPage = () => {
     password: "",
     confirmPassword: "",
     userType: "user",
-    storeName: "", // For sellers
+    storeName: "",
   });
 
   useEffect(() => {
-    setIsVisible(true);
-    const handleMouseMove = (e) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
-
-  useEffect(() => {
-    // Calculate password strength
     let strength = 0;
     if (user.password.length >= 8) strength++;
     if (user.password.match(/[a-z]/) && user.password.match(/[A-Z]/)) strength++;
@@ -94,7 +81,6 @@ const RegisterPage = () => {
       return;
     }
 
-    // Validate seller requirements
     if (user.userType === "seller" && !user.storeName.trim()) {
       setError("Store name is required for seller accounts");
       setLoading(false);
@@ -111,8 +97,7 @@ const RegisterPage = () => {
       } else {
         console.log("Registration successful");
         toast.success("Account created successfully!");
-        
-        // Redirect based on user role
+
         const userRole = result.user.role || result.user.userType;
         if (userRole === "admin") {
           router.push("/emergency/admin");
@@ -131,105 +116,80 @@ const RegisterPage = () => {
   };
 
   const getPasswordStrengthColor = () => {
-    if (passwordStrength === 0) return "bg-secondary";
-    if (passwordStrength === 1) return "bg-accent/40";
-    if (passwordStrength === 2) return "bg-accent/60";
-    if (passwordStrength === 3) return "bg-accent/80";
-    return "bg-primary";
+    if (passwordStrength === 0) return "bg-gray-200";
+    if (passwordStrength === 1) return "bg-red-400";
+    if (passwordStrength === 2) return "bg-yellow-400";
+    if (passwordStrength === 3) return "bg-blue-400";
+    return "bg-green-500";
   };
 
   const renderForm = () => (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} className="my-8">
       {error && (
-        <div className="mb-4 p-4 bg-accent/20 border-l-4 border-primary rounded-lg flex items-center gap-3 animate-slide-in-up">
-          <AlertCircle className="w-5 h-5 text-primary flex-shrink-0" />
-          <p className="text-primary text-sm font-medium">{error}</p>
+        <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" />
+          <p className="text-red-600 dark:text-red-400 text-sm">{error}</p>
         </div>
       )}
-      
-      <div className="space-y-2">
-        <label className="block text-primary text-sm font-semibold mb-2 flex items-center gap-2" htmlFor="name">
-          <UserPlus className="w-4 h-4 text-accent" />
-          Full Name
-        </label>
-        <div className="relative group">
-          <div className="absolute inset-0 bg-accent/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <Input
-            type="text"
-            id="name"
-            name="name"
-            value={user.name}
-            onChange={handleInputChange}
-            className="w-full relative z-10 bg-white border-2 border-accent/30 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300 h-12 pl-4 pr-4"
-            placeholder="John Doe"
-            required
-          />
-        </div>
-      </div>
 
-      <div className="space-y-2">
-        <label className="block text-primary text-sm font-semibold mb-2 flex items-center gap-2" htmlFor="email">
-          <Mail className="w-4 h-4 text-accent" />
-          Email Address
-        </label>
-        <div className="relative group">
-          <div className="absolute inset-0 bg-accent/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          <Input
-            type="email"
-            id="email"
-            name="email"
-            value={user.email}
-            onChange={handleInputChange}
-            className="w-full relative z-10 bg-white border-2 border-accent/30 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300 h-12 pl-4 pr-4"
-            placeholder="your.email@example.com"
-            required
-          />
-        </div>
-      </div>
+      <LabelInputContainer className="mb-4">
+        <Label htmlFor="name">Full Name</Label>
+        <Input
+          type="text"
+          id="name"
+          name="name"
+          value={user.name}
+          onChange={handleInputChange}
+          placeholder="John Doe"
+          required
+        />
+      </LabelInputContainer>
+
+      <LabelInputContainer className="mb-4">
+        <Label htmlFor="email">Email Address</Label>
+        <Input
+          type="email"
+          id="email"
+          name="email"
+          value={user.email}
+          onChange={handleInputChange}
+          placeholder="your.email@example.com"
+          required
+        />
+      </LabelInputContainer>
 
       {user.userType === "seller" && (
-        <div className="space-y-2">
-          <label className="block text-primary text-sm font-semibold mb-2 flex items-center gap-2" htmlFor="storeName">
-            <Building2 className="w-4 h-4 text-accent" />
-            Store Name
-          </label>
-          <div className="relative group">
-            <div className="absolute inset-0 bg-accent/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <Input
-              type="text"
-              id="storeName"
-              name="storeName"
-              value={user.storeName}
-              onChange={handleInputChange}
-              className="w-full relative z-10 bg-white border-2 border-accent/30 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300 h-12 pl-4 pr-4"
-              placeholder="My Pet Store"
-              required
-            />
-          </div>
-        </div>
+        <LabelInputContainer className="mb-4">
+          <Label htmlFor="storeName">Store Name</Label>
+          <Input
+            type="text"
+            id="storeName"
+            name="storeName"
+            value={user.storeName}
+            onChange={handleInputChange}
+            placeholder="My Pet Store"
+            required
+          />
+        </LabelInputContainer>
       )}
 
-      <div className="space-y-2">
-        <label className="block text-primary text-sm font-semibold mb-2 flex items-center gap-2" htmlFor="password">
-          <Lock className="w-4 h-4 text-accent" />
-          Password
-        </label>
-        <div className="relative group">
-          <div className="absolute inset-0 bg-accent/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      <LabelInputContainer className="mb-4">
+        <Label htmlFor="password">Password</Label>
+        <div className="relative">
           <Input
             type={showPassword ? "text" : "password"}
             id="password"
             name="password"
             value={user.password}
             onChange={handleInputChange}
-            className="w-full relative z-10 bg-white border-2 border-accent/30 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300 h-12 pl-4 pr-12"
-            placeholder="Create a strong password"
+            placeholder="••••••••"
             required
+            className="pr-10"
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-accent hover:text-primary transition-colors z-20"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
             {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
           </button>
@@ -240,13 +200,12 @@ const RegisterPage = () => {
               {[1, 2, 3, 4].map((i) => (
                 <div
                   key={i}
-                  className={`flex-1 rounded-full transition-all duration-300 ${
-                    i <= passwordStrength ? getPasswordStrengthColor() : "bg-secondary"
-                  }`}
+                  className={`flex-1 rounded-full transition-all ${i <= passwordStrength ? getPasswordStrengthColor() : "bg-gray-200 dark:bg-gray-700"
+                    }`}
                 ></div>
               ))}
             </div>
-            <p className="text-xs text-secondary mt-1">
+            <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">
               {passwordStrength === 0 && "Enter a password"}
               {passwordStrength === 1 && "Weak password"}
               {passwordStrength === 2 && "Fair password"}
@@ -255,75 +214,69 @@ const RegisterPage = () => {
             </p>
           </div>
         )}
-      </div>
+      </LabelInputContainer>
 
-      <div className="space-y-2">
-        <label className="block text-primary text-sm font-semibold mb-2 flex items-center gap-2" htmlFor="confirmPassword">
-          <Lock className="w-4 h-4 text-accent" />
-          Confirm Password
-        </label>
-        <div className="relative group">
-          <div className="absolute inset-0 bg-accent/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      <LabelInputContainer className="mb-8">
+        <Label htmlFor="confirmPassword">Confirm Password</Label>
+        <div className="relative">
           <Input
             type={showConfirmPassword ? "text" : "password"}
             id="confirmPassword"
             name="confirmPassword"
             value={user.confirmPassword}
             onChange={handleInputChange}
-            className="w-full relative z-10 bg-white border-2 border-accent/30 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300 h-12 pl-4 pr-12"
-            placeholder="Confirm your password"
+            placeholder="••••••••"
             required
+            className="pr-10"
           />
           <button
             type="button"
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-accent hover:text-primary transition-colors z-20"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
             {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
           </button>
         </div>
         {user.confirmPassword && user.password === user.confirmPassword && (
-          <div className="flex items-center gap-2 text-primary text-sm mt-1">
+          <div className="flex items-center gap-2 text-green-600 dark:text-green-400 text-sm mt-1">
             <CheckCircle2 className="w-4 h-4" />
             <span>Passwords match</span>
           </div>
         )}
         {user.confirmPassword && user.password !== user.confirmPassword && (
-          <div className="flex items-center gap-2 text-primary text-sm mt-1">
+          <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm mt-1">
             <AlertCircle className="w-4 h-4" />
             <span>Passwords do not match</span>
           </div>
         )}
-      </div>
+      </LabelInputContainer>
 
-      <Button
+      <button
+        className="group/btn relative block h-10 w-full rounded-md bg-gradient-to-br from-black to-neutral-600 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:bg-zinc-800 dark:from-zinc-900 dark:to-zinc-900 dark:shadow-[0px_1px_0px_0px_#27272a_inset,0px_-1px_0px_0px_#27272a_inset]"
         type="submit"
         disabled={loading || (user.password !== user.confirmPassword && user.confirmPassword !== "")}
-        className="w-full bg-primary text-white py-6 rounded-xl hover:bg-primary/90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-semibold text-lg shadow-lg hover:shadow-xl hover:scale-[1.02] relative overflow-hidden group"
       >
-        <span className="relative z-10 flex items-center justify-center gap-2">
-          {loading ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              Creating Account...
-            </>
-          ) : (
-            <>
-              Create {user.userType === 'seller' ? 'Seller' : 'User'} Account
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </>
-          )}
-        </span>
-        <div className="absolute inset-0 bg-accent opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
-      </Button>
+        {loading ? (
+          <span className="flex items-center justify-center">
+            <Loader2 className="w-5 h-5 animate-spin mr-2" />
+            Creating Account...
+          </span>
+        ) : (
+          <>
+            Create {user.userType === 'seller' ? 'Seller' : 'User'} Account &rarr;
+          </>
+        )}
+        <BottomGradient />
+      </button>
 
       <div className="mt-6 text-center">
-        <p className="text-sm text-secondary">
+        <p className="text-sm text-neutral-600 dark:text-neutral-300">
           Already have an account?{" "}
           <button
             type="button"
             onClick={() => router.push("/login")}
-            className="text-primary hover:text-accent font-semibold underline decoration-2 underline-offset-2 transition-colors">
+            className="text-cyan-600 hover:text-cyan-500 dark:text-cyan-400 dark:hover:text-cyan-300 font-medium"
+          >
             Sign in here
           </button>
         </p>
@@ -332,118 +285,71 @@ const RegisterPage = () => {
   );
 
   return (
-    <div className="relative flex items-center justify-center min-h-screen overflow-hidden bg-gradient-to-br from-secondary via-white to-secondary/50">
-      {/* Animated Background */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div 
-          className="absolute w-96 h-96 bg-accent/30 rounded-full blur-3xl transition-all duration-1000 ease-out opacity-50"
-          style={{
-            left: `${mousePosition.x / 20}px`,
-            top: `${mousePosition.y / 20}px`,
-            transform: 'translate(-50%, -50%)'
-          }}
-        ></div>
-        <div className="absolute top-0 left-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse opacity-30"></div>
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-accent/30 rounded-full blur-3xl animate-pulse opacity-30 delay-1000"></div>
-      </div>
-
-      {/* Floating Particles */}
-      {[...Array(25)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute w-2 h-2 bg-accent/40 rounded-full animate-float opacity-40"
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 5}s`,
-            animationDuration: `${5 + Math.random() * 5}s`
-          }}
-        ></div>
-      ))}
-
-      <div className="container mx-auto px-4 py-12 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-8 items-center max-w-6xl mx-auto">
-          {/* Left Side - Visual */}
-          <div className={`hidden lg:flex flex-col items-center justify-center space-y-8 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
-            <div className="relative">
-              <div className="absolute inset-0 bg-accent/30 rounded-full blur-2xl opacity-50 animate-pulse"></div>
-              <div className="relative bg-primary rounded-3xl shadow-2xl transform hover:scale-105 transition-transform duration-500 overflow-hidden" style={{ width: '400px', height: '400px', minHeight: '400px' }}>
-                <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-                  <Cat3DScene />
-                </div>
-              </div>
+    <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-neutral-950">
+      <div className="container mx-auto px-4 py-12">
+        <div className="grid lg:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
+          {/* Left Side - Dog Animation */}
+          <div className="hidden lg:flex flex-col items-center justify-center">
+            <div className="mb-8">
+              <DogLoader2 />
             </div>
-            <div className="text-center space-y-4">
-              <h1 className="titlefont text-4xl md:text-5xl font-bold text-primary">
+            <div className="text-center">
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
                 Join FurEver Today!
               </h1>
-              <p className="text-lg text-secondary max-w-md">
+              <p className="text-lg text-gray-600 dark:text-gray-400 max-w-md">
                 Become part of our community dedicated to helping animals and creating a better world for our furry friends.
               </p>
-            </div>
-            <div className="flex flex-wrap gap-3 justify-center">
-              {['Adopt', 'Volunteer', 'Donate', 'Connect'].map((item, i) => (
-                <div key={i} className="px-4 py-2 bg-white rounded-full shadow-md border-2 border-primary">
-                  <span className="text-sm font-semibold text-primary">{item}</span>
-                </div>
-              ))}
             </div>
           </div>
 
           {/* Right Side - Form */}
-          <div className={`w-full transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}`}>
-            <div className="bg-white/95 backdrop-blur-xl p-8 md:p-10 rounded-3xl shadow-2xl border-2 border-accent/20 relative overflow-hidden">
-              {/* Decorative overlay */}
-              <div className="absolute top-0 left-0 w-64 h-64 bg-accent/20 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2 opacity-50"></div>
-              
-              <div className="relative z-10">
-                <div className="text-center mb-8">
-                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary rounded-full mb-4">
-                    <Sparkles className="w-4 h-4 text-white" />
-                    <span className="text-sm font-semibold text-white">FurEver</span>
-                  </div>
-                  <h2 className="titlefont text-3xl md:text-4xl font-bold text-primary mb-2">
-                    Create Account
-                  </h2>
-                  <p className="text-secondary">Join our platform today</p>
-                </div>
+          <div className="w-full">
+            <div className="shadow-input mx-auto w-full max-w-md rounded-none bg-white p-4 md:rounded-2xl md:p-8 dark:bg-black">
+              <h2 className="text-xl font-bold text-neutral-800 dark:text-neutral-200">
+                Welcome to FurEver
+              </h2>
+              <p className="mt-2 max-w-sm text-sm text-neutral-600 dark:text-neutral-300">
+                Create your account to get started
+              </p>
 
-                <Tabs defaultValue="user" className="w-full" value={user.userType}>
-                  <TabsList className="grid w-full grid-cols-2 mb-8 bg-secondary p-1 rounded-xl">
-                    <TabsTrigger
-                      value="user"
-                      onClick={() => handleUserTypeChange("user")}
-                      className="flex items-center gap-2 text-sm data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 rounded-lg text-primary"
-                    >
-                      <User className="h-4 w-4" />
-                      <span className="hidden sm:inline">User</span>
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="seller"
-                      onClick={() => handleUserTypeChange("seller")}
-                      className="flex items-center gap-2 text-sm data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-md transition-all duration-300 rounded-lg text-primary"
-                    >
-                      <Store className="h-4 w-4" />
-                      <span className="hidden sm:inline">Seller</span>
-                    </TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="user" className="mt-0">
-                    {renderForm()}
-                  </TabsContent>
-                  
-                  <TabsContent value="seller" className="mt-0">
-                    <div className="bg-accent/20 p-4 rounded-xl mb-6 border-2 border-primary flex items-start gap-3">
-                      <Store className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+              <Tabs defaultValue="user" className="w-full mt-6" value={user.userType}>
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger
+                    value="user"
+                    onClick={() => handleUserTypeChange("user")}
+                    className="flex items-center gap-2"
+                  >
+                    <User className="h-4 w-4" />
+                    User
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="seller"
+                    onClick={() => handleUserTypeChange("seller")}
+                    className="flex items-center gap-2"
+                  >
+                    <Store className="h-4 w-4" />
+                    Seller
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="user">
+                  {renderForm()}
+                </TabsContent>
+
+                <TabsContent value="seller">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-6 border border-blue-200 dark:border-blue-800">
+                    <div className="flex items-start gap-3">
+                      <Store className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-primary font-semibold text-sm mb-1">Seller Account</p>
-                        <p className="text-secondary text-xs">Manage your products, orders, and grow your pet business with us.</p>
+                        <p className="text-blue-900 dark:text-blue-200 font-medium text-sm mb-1">Seller Account</p>
+                        <p className="text-blue-700 dark:text-blue-300 text-xs">Manage your products, orders, and grow your pet business with us.</p>
                       </div>
                     </div>
-                    {renderForm()}
-                  </TabsContent>
-                </Tabs>
-              </div>
+                  </div>
+                  {renderForm()}
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
         </div>

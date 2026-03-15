@@ -79,9 +79,18 @@ export default function UserDashboard({ user: initialUser }) {
 
       // Fetch all data in parallel
       const [ordersRes, appointmentsRes, upcomingRes] = await Promise.all([
-        fetch(`/api/orders?userId=${currentUser._id}`).catch(() => ({ ok: false })),
-        fetch(`/api/appointments?userId=${currentUser._id}&limit=5`).catch(() => ({ ok: false })),
-        fetch(`/api/appointments?userId=${currentUser._id}&upcoming=true&limit=3`).catch(() => ({ ok: false }))
+        fetch(`/api/orders?userId=${currentUser._id}`).catch((err) => {
+          console.error("Failed to fetch orders:", err);
+          return { ok: false, error: err.message };
+        }),
+        fetch(`/api/appointments?userId=${currentUser._id}&limit=5`).catch((err) => {
+          console.error("Failed to fetch appointments:", err);
+          return { ok: false, error: err.message };
+        }),
+        fetch(`/api/appointments?userId=${currentUser._id}&upcoming=true&limit=3`).catch((err) => {
+          console.error("Failed to fetch upcoming appointments:", err);
+          return { ok: false, error: err.message };
+        })
       ]);
 
       // Process orders

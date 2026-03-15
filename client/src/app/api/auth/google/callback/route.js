@@ -22,3 +22,4 @@ export async function GET(request) {
   return redirect(`/auth/google/callback?code=${code}&userType=${state || "user"}`);
 }
 
+

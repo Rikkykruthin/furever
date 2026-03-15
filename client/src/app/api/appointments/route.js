@@ -7,6 +7,15 @@ import User from "@/../db/schema/user.schema";
 // GET - Fetch appointments with filtering
 export async function GET(request) {
   try {
+    // Check for required environment variables
+    if (!process.env.MONGO_URI) {
+      console.error("MONGO_URI environment variable is missing");
+      return NextResponse.json(
+        { success: false, message: "Database configuration error. Please check server logs." },
+        { status: 500 }
+      );
+    }
+
     await connectToDatabase();
     
     const { searchParams } = new URL(request.url);

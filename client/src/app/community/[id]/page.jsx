@@ -38,7 +38,7 @@ function CommunityInteriorPage() {
         if (userToken) {
           setIsLoggedIn(true);
           setUser(userToken);
-          setToken(userToken);
+          setToken(userToken.token);
         } else {
           setIsLoggedIn(false);
         }

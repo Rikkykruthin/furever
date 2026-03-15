@@ -266,7 +266,7 @@ async function checkSlotAvailability(trainerId, scheduledDate, scheduledTime) {
   const trainer = await Trainer.findById(trainerId);
   if (!trainer) return false;
   
-  const dayOfWeek = new Date(scheduledDate).toLocaleDateString('en-US', { weekday: 'lowercase' });
+  const dayOfWeek = new Date(scheduledDate).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
   const dayAvailability = trainer.availability[dayOfWeek];
   
   if (!dayAvailability || !dayAvailability.isAvailable) {
@@ -296,7 +296,7 @@ async function checkSlotAvailability(trainerId, scheduledDate, scheduledTime) {
 }
 
 async function updateTrainerSlotAvailability(trainerId, scheduledDate, scheduledTime, isBooked) {
-  const dayOfWeek = new Date(scheduledDate).toLocaleDateString('en-US', { weekday: 'lowercase' });
+  const dayOfWeek = new Date(scheduledDate).toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
   
   await Trainer.updateOne(
     {

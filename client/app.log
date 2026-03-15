@@ -1,0 +1,16 @@
+
+> client@0.1.0 dev
+> next dev
+
+ ⚠ Port 3000 is in use by process 50220, using available port 3002 instead.
+   ▲ Next.js 15.5.12
+   - Local:        http://localhost:3002
+   - Network:      http://192.168.29.132:3002
+   - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 1760ms
+ ○ Compiling /api/groomer ...
+ ✓ Compiled /api/groomer in 1286ms (308 modules)
+✅ Connected to MongoDB successfully!
+ GET /api/groomer 200 in 2215ms
